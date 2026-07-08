@@ -1,0 +1,23 @@
+# Dependencies
+node_modules/
+
+# Build outputs
+lib/
+dist/
+storybook-static/
+
+# Expo
+.expo/
+expo-env.d.ts
+
+# Storybook React Native (generated)
+storybook.requires.ts
+
+# Tests
+coverage/
+
+# Misc
+*.log
+.DS_Store
+.env*
+!.env.example

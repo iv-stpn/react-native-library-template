@@ -1,0 +1,17 @@
+{
+  "expo": {
+    "name": "UI Library Example",
+    "slug": "ui-library-example",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "automatic",
+    "newArchEnabled": true,
+    "ios": {
+      "supportsTablet": true
+    },
+    "android": {
+      "edgeToEdgeEnabled": true
+    },
+    "plugins": ["@react-native-community/datetimepicker"]
+  }
+}

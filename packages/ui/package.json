@@ -1,0 +1,81 @@
+{
+  "name": "@template/ui",
+  "version": "0.1.0",
+  "description": "Reusable React Native UI component library",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/your-org/react-native-library-template.git",
+    "directory": "packages/ui"
+  },
+  "keywords": [
+    "react-native",
+    "react",
+    "ui",
+    "components"
+  ],
+  "exports": {
+    "./button": {
+      "source": "./src/components/Button/button.tsx",
+      "types": "./lib/typescript/components/Button/button.d.ts",
+      "default": "./lib/module/components/Button/button.js"
+    },
+    "./theme": {
+      "source": "./src/theme/tokens.ts",
+      "types": "./lib/typescript/theme/tokens.d.ts",
+      "default": "./lib/module/theme/tokens.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "src",
+    "lib",
+    "!**/*.test.*",
+    "!**/*.stories.*"
+  ],
+  "sideEffects": false,
+  "scripts": {
+    "build": "bob build",
+    "clean": "rm -rf lib",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest"
+  },
+  "react-native-builder-bob": {
+    "source": "src",
+    "output": "lib",
+    "exclude": "**/{*.test,*.stories}.{ts,tsx}",
+    "targets": [
+      [
+        "module",
+        {
+          "esm": true
+        }
+      ],
+      [
+        "typescript",
+        {
+          "project": "tsconfig.build.json"
+        }
+      ]
+    ]
+  },
+  "devDependencies": {
+    "@storybook/react": "^10.4.6",
+    "@testing-library/jest-dom": "^6.9.1",
+    "@testing-library/react": "^16.3.2",
+    "@types/react": "~19.1.10",
+    "jsdom": "^29.1.1",
+    "react": "19.1.0",
+    "react-dom": "19.1.0",
+    "react-native": "0.81.5",
+    "react-native-builder-bob": "^0.43.0",
+    "react-native-web": "0.21.2",
+    "storybook": "^10.4.6",
+    "typescript": "^6",
+    "vitest": "^4.1.10"
+  },
+  "publishConfig": {
+    "access": "public"
+  }
+}
