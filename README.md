@@ -1,8 +1,18 @@
 # react-native-library-template
 
+<!-- template-exclude:start -->
+[![Live demo](https://img.shields.io/badge/live%20demo-Storybook-blue)](https://iv-stpn.github.io/react-native-library-template/)
+[![npm](https://img.shields.io/npm/v/create-react-native-library-template?color=blue&label=npm)](https://www.npmjs.com/package/create-react-native-library-template)
+<!-- template-exclude:end -->
+
 Template for building and publishing a React Native UI component library.
 
-**Live demo:** [iv-stpn.github.io/react-native-library-template](https://iv-stpn.github.io/react-native-library-template/) — the web Storybook, deployed from `main`.
+<!-- template-exclude:start -->
+The web Storybook is
+[deployed from `main`](https://iv-stpn.github.io/react-native-library-template/), and the
+scaffolder is published as
+[`create-react-native-library-template`](https://www.npmjs.com/package/create-react-native-library-template).
+<!-- template-exclude:end -->
 
 - **[Bun](https://bun.sh)** — package manager, script runner, workspaces
 - **[TypeScript 6](https://www.typescriptlang.org)** — strict mode everywhere
