@@ -1,5 +1,12 @@
 # @template/ui
 
+## 0.1.3
+
+### Patch Changes
+
+- a6ba45e: Mark `@template/ui` as `private` so the release workflow no longer tries to publish the placeholder `@template` scope to npm (which 404s). Changesets still versions it and writes its changelog; the template only publishes the `create/` scaffolder. Scaffolded projects that want to publish their library should rename the `@template/*` packages to their own npm scope, remove `"private": true` from `packages/ui/package.json`, and set the `NPM_TOKEN` repository secret.
+- f8a35ba: Add live-demo and npm badges plus a hosted-Storybook/scaffolder description to the repo `README.md`, and wrap those repo-only sections in `template-exclude` markers so scaffolded projects get a clean README without the template's own demo links and package badges. No runtime changes to the published package.
+
 ## 0.1.2
 
 ### Patch Changes
