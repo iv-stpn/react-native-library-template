@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/react';
 import { expect, fireEvent, fn, userEvent, within } from 'storybook/test';
-import { Button } from './button.tsx';
+import { Button } from './button';
 
 const meta = {
   title: 'Components/Button',
