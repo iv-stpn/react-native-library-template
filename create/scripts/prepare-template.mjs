@@ -1,5 +1,5 @@
 import { execFileSync } from 'node:child_process';
-import { cpSync, mkdirSync, rmSync } from 'node:fs';
+import { cpSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { basename, dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -21,13 +21,34 @@ const trackedFiles = output
 
 rmSync(templateDir, { recursive: true, force: true });
 
+// Removes line ranges delimited by "template-exclude:start" / "template-exclude:end"
+// marker comments — repo-only bits (like the workflow step publishing this very
+// package) that must not end up in scaffolded projects.
+function stripExcludedBlocks(content) {
+  const lines = content.split('\n');
+  const kept = [];
+  let excluding = false;
+  for (const line of lines) {
+    if (line.includes('template-exclude:start')) {
+      excluding = true;
+      // Also drop the blank line that precedes the stripped block.
+      if (kept.at(-1) === '') kept.pop();
+    } else if (line.includes('template-exclude:end')) excluding = false;
+    else if (!excluding) kept.push(line);
+  }
+  return kept.join('\n');
+}
+
 for (const file of trackedFiles) {
   // npm never includes .gitignore files in tarballs; ship them renamed and
   // let the CLI rename them back when scaffolding.
   const target = basename(file) === '.gitignore' ? join(dirname(file), 'gitignore') : file;
   const destination = join(templateDir, target);
   mkdirSync(dirname(destination), { recursive: true });
-  cpSync(join(repoRoot, file), destination);
+  const source = join(repoRoot, file);
+  const content = readFileSync(source);
+  if (content.includes('template-exclude:start')) writeFileSync(destination, stripExcludedBlocks(content.toString('utf8')));
+  else cpSync(source, destination);
 }
 
 console.log(`Copied ${trackedFiles.length} files into ${templateDir}`);

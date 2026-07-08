@@ -44,3 +44,19 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      # template-exclude:start — this step is stripped from scaffolded projects,
+      # which do not contain the create/ scaffolder package.
+      - name: Publish create-react-native-library-template
+        working-directory: create
+        run: |
+          local_version=$(node -p "require('./package.json').version")
+          published_version=$(npm view create-react-native-library-template version 2>/dev/null || echo none)
+          if [ "$local_version" = "$published_version" ]; then
+            echo "create-react-native-library-template@$local_version is already on npm; skipping."
+          else
+            npm publish
+          fi
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+      # template-exclude:end
