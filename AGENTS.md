@@ -34,32 +34,44 @@ Follow the `Button` component (`packages/ui/src/components/Button/`) as the refe
 implementation. For a component named `Foo`:
 
 1. **Create the folder** `packages/ui/src/components/Foo/` containing exactly:
-   - `Foo.tsx` — the component.
-   - `Foo.test.tsx` — vitest unit tests.
-   - `Foo.stories.tsx` — Storybook stories (CSF3), including at least one `play` function.
-   - `index.ts` — re-exports: `export { Foo, type FooProps } from './Foo';`
-2. **Write the component** (`Foo.tsx`):
+   - `foo.tsx` — the component.
+   - `foo.test.tsx` — vitest unit tests.
+   - `foo.stories.tsx` — Storybook stories (CSF3), including at least one `play` function.
+
+   **No `index.ts`** — barrel files are forbidden everywhere in the library. Public entry
+   points are declared in the `exports` map of `packages/ui/package.json` (step 3), and
+   internal imports always target the concrete file (`../../theme/tokens`), never a folder.
+2. **Write the component** (`foo.tsx`):
    - Named function export (`export function Foo(...)`), never a default export.
    - Export a `FooProps` interface with a JSDoc comment per prop; document defaults with `@default`.
    - Only import from `react`, `react-native`, and internal modules. New runtime dependencies
      need explicit approval — they become dependencies for every consumer of the library.
    - Use only RN APIs that exist on react-native-web (`View`, `Text`, `Pressable`,
      `StyleSheet`, ...), otherwise unit tests and the web Storybook will break.
-   - Style with `StyleSheet.create` and the design tokens from `src/theme` (`colors`,
+   - Style with `StyleSheet.create` and the design tokens from `src/theme/tokens.ts` (`colors`,
      `spacing`, `radii`, `fontSizes`) — no hard-coded colors or magic numbers. Add new tokens
      to `src/theme/tokens.ts` if needed.
    - Accessibility is required: set `accessibilityRole`, `accessibilityState`, and accept an
      `accessibilityLabel` prop. Also accept `style` (as `StyleProp<...>`) and `testID`.
-3. **Export it from the library**: add `export * from './components/Foo';` to
-   `packages/ui/src/index.ts`.
-4. **Write stories** (`Foo.stories.tsx`):
+3. **Export it from the library**: add a `./foo` subpath to the `exports` map in
+   `packages/ui/package.json`, mirroring the existing `./button` entry:
+   ```json
+   "./foo": {
+     "source": "./src/components/Foo/foo.tsx",
+     "types": "./lib/typescript/components/Foo/foo.d.ts",
+     "default": "./lib/module/components/Foo/foo.js"
+   }
+   ```
+   Consumers then use `import { Foo } from '@template/ui/foo'`. There is no root entry
+   point and no `src/index.ts` — never add one.
+4. **Write stories** (`foo.stories.tsx`):
    - CSF3 with `satisfies Meta<typeof Foo>` and `StoryObj<typeof meta>`; title `Components/Foo`.
    - Set default `args` for every prop; use `fn()` from `storybook/test` for callbacks.
    - One story per visual variant/state, plus interaction stories with `play` functions
      asserting behavior (`within`, `userEvent`, `expect` from `storybook/test`).
    - Stories are shared by the web and native Storybooks — keep them platform-neutral and
      import types only from `@storybook/react` (type-only imports are erased at runtime).
-5. **Write unit tests** (`Foo.test.tsx`) with `@testing-library/react`. They run in jsdom with
+5. **Write unit tests** (`foo.test.tsx`) with `@testing-library/react`. They run in jsdom with
    `react-native` aliased to `react-native-web`. Query by accessible role/name
    (`screen.getByRole('button', { name: ... })`), and cover: rendering, interaction callbacks,
    and disabled/edge states.
