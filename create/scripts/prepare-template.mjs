@@ -10,8 +10,14 @@ const packageDir = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const repoRoot = resolve(packageDir, '..');
 const templateDir = join(packageDir, 'template');
 
+// Skipped: this package itself, and pending changesets (release notes for the
+// template repo, not for freshly scaffolded projects).
+const isPendingChangeset = (file) => file.startsWith('.changeset/') && file.endsWith('.md') && file !== '.changeset/README.md';
+
 const output = execFileSync('git', ['-C', repoRoot, 'ls-files', '-z'], { encoding: 'utf8' });
-const trackedFiles = output.split('\0').filter((file) => file.length > 0 && !file.startsWith('create/'));
+const trackedFiles = output
+  .split('\0')
+  .filter((file) => file.length > 0 && !file.startsWith('create/') && !isPendingChangeset(file));
 
 rmSync(templateDir, { recursive: true, force: true });
 
