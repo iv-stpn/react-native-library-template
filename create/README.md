@@ -9,7 +9,7 @@ bun create react-native-library-template my-library
 
 ## What you get
 
-- **Bun workspaces** monorepo: the library (`packages/ui`), a web Storybook (`apps/storybook`), and an Expo app running Storybook on device (`apps/native`).
+- **Bun workspaces** monorepo: the library (`packages/ui`), a web Storybook (`storybook/web`), and an Expo app running Storybook on device (`storybook/native`).
 - **Storybook 10** on web (react-native-web + Vite) and native, sharing the same CSF3 stories.
 - **Vitest** unit tests (jsdom + react-native-web) and story tests (browser mode, `play` functions).
 - **Biome** linting/formatting, **TypeScript** strict mode.

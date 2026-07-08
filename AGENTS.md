@@ -5,8 +5,8 @@ Monorepo for a publishable React Native UI library. Bun workspaces:
 | Workspace | Package | Purpose |
 | --- | --- | --- |
 | `packages/ui` | `@template/ui` | The library. The only published package. |
-| `apps/storybook` | `@template/storybook-web` | Web Storybook (react-native-web + Vite) and Storybook tests (Vitest browser mode). |
-| `apps/native` | `@template/example` | Expo app running Storybook React Native on device. |
+| `storybook/web` | `@template/storybook-web` | Web Storybook (react-native-web + Vite) and Storybook tests (Vitest browser mode). |
+| `storybook/native` | `@template/example` | Expo app running Storybook React Native on device. |
 
 Tooling: **bun** (package manager + script runner), **biome** (lint + format), **TypeScript 6**
 (strict, `verbatimModuleSyntax` — use `import type` for types), **vitest** (unit tests via
@@ -77,15 +77,17 @@ CI (`.github/workflows/ci.yml`) runs lint, typecheck, tests, build, and Storyboo
 every PR. On pushes to `main`, `.github/workflows/release.yml` uses changesets to open/update
 a "Version Packages" PR; merging it publishes `@template/ui` to npm (requires the `NPM_TOKEN`
 repository secret). Never edit versions in `package.json` or `CHANGELOG.md` by hand.
+`.github/workflows/deploy-storybook.yml` builds the web Storybook (`storybook/web`) on every
+push to `main` and deploys it to GitHub Pages (repo Settings → Pages → Source: GitHub Actions).
 
 ## Gotchas
 
-- `apps/native/.rnstorybook/storybook.requires.ts` is generated (by Metro or
-  `bun run --cwd apps/native storybook-generate`) and gitignored — never edit it.
+- `storybook/native/.rnstorybook/storybook.requires.ts` is generated (by Metro or
+  `bun run --cwd storybook/native storybook-generate`) and gitignored — never edit it.
 - Test/story files are excluded from the published package and from the bob build; keep
   runtime code out of them.
 - The example app must stay on Expo SDK-pinned dependency versions (`bunx expo install ...`
-  from `apps/native` when adding native modules).
+  from `storybook/native` when adding native modules).
 
 ## Scaffolder (`create/`)
 

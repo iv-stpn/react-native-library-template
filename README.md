@@ -2,6 +2,8 @@
 
 Template for building and publishing a React Native UI component library.
 
+**Live demo:** [iv-stpn.github.io/react-native-library-template](https://iv-stpn.github.io/react-native-library-template/) — the web Storybook, deployed from `main`.
+
 - **[Bun](https://bun.sh)** — package manager, script runner, workspaces
 - **[TypeScript 6](https://www.typescriptlang.org)** — strict mode everywhere
 - **[Biome](https://biomejs.dev)** — linting + formatting
@@ -15,8 +17,8 @@ Template for building and publishing a React Native UI component library.
 
 ```
 packages/ui/        @template/ui — the library (published)
-apps/storybook/     Web Storybook + Storybook tests
-apps/native/        Expo app running Storybook React Native on device
+storybook/web/      Web Storybook + Storybook tests
+storybook/native/   Expo app running Storybook React Native on device
 ```
 
 ## Getting started
