@@ -11,7 +11,8 @@ Monorepo for a publishable React Native UI library. Bun workspaces:
 Tooling: **bun** (package manager + script runner), **biome** (lint + format), **TypeScript 6**
 (strict, `verbatimModuleSyntax` — use `import type` for types), **vitest** (unit tests via
 react-native-web in jsdom; story tests via `@storybook/addon-vitest` in Chromium),
-**react-native-builder-bob** (library build), **changesets** (versioning/publishing).
+**react-native-builder-bob** (library build), **changesets** (versioning/publishing),
+**husky** (git hooks — a `pre-commit` hook runs lint, typecheck, and unit tests).
 
 ## Commands (run from the repo root)
 
@@ -94,6 +95,11 @@ push to `main` and deploys it to GitHub Pages (repo Settings → Pages → Sourc
 
 ## Gotchas
 
+- The husky `pre-commit` hook (`.husky/pre-commit`) runs `bun run lint`, `bun run typecheck`,
+  and `bun run test:unit` before every commit. Hooks install via the `prepare` script on
+  `bun install`. It does not run the Storybook browser tests (they need Chromium) — run
+  `bun run test:storybook` yourself before pushing, since CI does. To bypass the hook in a
+  pinch, commit with `--no-verify`.
 - `storybook/native/.rnstorybook/storybook.requires.ts` is generated (by Metro or
   `bun run --cwd storybook/native storybook-generate`) and gitignored — never edit it.
 - Test/story files are excluded from the published package and from the bob build; keep

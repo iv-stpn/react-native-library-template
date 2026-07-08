@@ -51,8 +51,9 @@ Scaffolded ${projectName} in ${targetDir}
 
 Next steps:
   cd ${target}
+  git init
   bun install
-  git init && git add -A && git commit -m "Initial commit"
+  git add -A && git commit -m "Initial commit"
 
 Useful commands:
   bun run storybook          # web Storybook at http://localhost:6006
