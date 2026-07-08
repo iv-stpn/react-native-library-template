@@ -4,7 +4,7 @@ Monorepo for a publishable React Native UI library. Bun workspaces:
 
 | Workspace | Package | Purpose |
 | --- | --- | --- |
-| `packages/ui` | `@template/ui` | The library. The only published package. |
+| `packages/ui` | `@template/ui` | The library. Versioned by changesets but `private` (see [Releasing](#releasing)). |
 | `storybook/web` | `@template/storybook-web` | Web Storybook (react-native-web + Vite) and Storybook tests (Vitest browser mode). |
 | `storybook/native` | `@template/example` | Expo app running Storybook React Native on device. |
 
@@ -88,8 +88,12 @@ implementation. For a component named `Foo`:
 
 CI (`.github/workflows/ci.yml`) runs lint, typecheck, tests, build, and Storybook tests on
 every PR. On pushes to `main`, `.github/workflows/release.yml` uses changesets to open/update
-a "Version Packages" PR; merging it publishes `@template/ui` to npm (requires the `NPM_TOKEN`
-repository secret). Never edit versions in `package.json` or `CHANGELOG.md` by hand.
+a "Version Packages" PR; merging it versions `@template/ui` and writes its changelog.
+`@template/ui` is marked `private`, so `changeset publish` versions it but never pushes the
+placeholder scope to npm (the template only publishes the `create/` scaffolder). To actually
+publish your library from a scaffolded project: rename the `@template/*` packages to your own
+npm scope, remove `"private": true` from `packages/ui/package.json`, and set the `NPM_TOKEN`
+repository secret. Never edit versions in `package.json` or `CHANGELOG.md` by hand.
 `.github/workflows/deploy-storybook.yml` builds the web Storybook (`storybook/web`) on every
 push to `main` and deploys it to GitHub Pages (repo Settings → Pages → Source: GitHub Actions).
 
