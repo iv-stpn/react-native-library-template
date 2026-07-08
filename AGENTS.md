@@ -86,3 +86,12 @@ repository secret). Never edit versions in `package.json` or `CHANGELOG.md` by h
   runtime code out of them.
 - The example app must stay on Expo SDK-pinned dependency versions (`bunx expo install ...`
   from `apps/native` when adding native modules).
+
+## Scaffolder (`create/`)
+
+`create/` holds `create-react-native-library-template`, the npm package behind
+`bun create react-native-library-template`. It is **not** a workspace and is not managed by
+changesets: it has zero dependencies and is published manually. Its `prepack` script snapshots
+every tracked file of this repo (except `create/` itself) into `create/template/` (renaming
+`.gitignore` → `gitignore`, which the CLI reverses on scaffold); `postpack` deletes the
+snapshot. To release it: bump `create/package.json` version, then `cd create && npm publish`.

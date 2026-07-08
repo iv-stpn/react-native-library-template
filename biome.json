@@ -1,4 +1,9 @@
 {
   "$schema": "https://biomejs.dev/schemas/2.5.3/schema.json",
-  "extends": ["@iv-stpn/biome-config/biome"]
+  "extends": ["@iv-stpn/biome-config/biome"],
+  "vcs": {
+    "enabled": true,
+    "clientKind": "git",
+    "useIgnoreFile": true
+  }
 }

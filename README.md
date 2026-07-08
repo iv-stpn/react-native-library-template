@@ -21,6 +21,15 @@ apps/native/        Expo app running Storybook React Native on device
 
 ## Getting started
 
+Scaffold a fresh project from this template:
+
+```sh
+bun create react-native-library-template my-library
+# or: npm create react-native-library-template@latest my-library
+```
+
+Or work in a clone of this repo directly:
+
 ```sh
 bun install
 

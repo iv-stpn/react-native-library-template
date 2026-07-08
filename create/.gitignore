@@ -1,0 +1,3 @@
+# Generated snapshot of the repo (scripts/prepare-template.mjs, runs on prepack)
+template/
+*.tgz

@@ -1,0 +1,41 @@
+{
+  "name": "create-react-native-library-template",
+  "version": "0.1.0",
+  "description": "Scaffold a React Native UI library monorepo: Bun workspaces, Expo, Storybook (web + native), Vitest, Biome and Changesets",
+  "license": "MIT",
+  "type": "module",
+  "bin": {
+    "create-react-native-library-template": "index.mjs"
+  },
+  "files": [
+    "index.mjs",
+    "template"
+  ],
+  "scripts": {
+    "prepack": "node scripts/prepare-template.mjs",
+    "postpack": "node -e \"require('node:fs').rmSync('template', { recursive: true, force: true })\""
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/iv-stpn/react-native-library-template.git",
+    "directory": "create"
+  },
+  "homepage": "https://github.com/iv-stpn/react-native-library-template#readme",
+  "keywords": [
+    "react-native",
+    "template",
+    "create",
+    "scaffold",
+    "ui",
+    "component-library",
+    "storybook",
+    "expo",
+    "bun"
+  ],
+  "engines": {
+    "node": ">=18"
+  },
+  "publishConfig": {
+    "access": "public"
+  }
+}
