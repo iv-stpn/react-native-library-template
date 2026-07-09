@@ -87,16 +87,26 @@ implementation. For a component named `Foo`:
 ## Releasing
 
 CI (`.github/workflows/ci.yml`) runs lint, typecheck, tests, build, and Storybook tests on
-every PR. Scaffolded projects use changesets: on pushes to `main`, `.github/workflows/release.yml`
-opens/updates a "Version Packages" PR; merging it versions the library and writes its changelog.
-The next push to `main` runs `changeset publish`, which publishes the library to npm (requires
-`NPM_TOKEN` repository secret and the package renamed from `@template/*` to your own scope).
-Never edit versions in `package.json` or `CHANGELOG.md` by hand.
+every PR. Releasing is driven entirely by changesets: on pushes to `main`,
+`.github/workflows/release.yml` opens/updates a "Version Packages" PR; merging it runs
+`changeset version` (bumping versions and writing changelogs) and the next push runs
+`bun run release` (`changeset publish`) to publish to npm. It needs the `NPM_TOKEN` repository
+secret. Never edit versions in `package.json` or `CHANGELOG.md` by hand — write a changeset
+(`bun run changeset`) instead.
 
-This template repo publishes only the scaffolder (`create-react-native-library-template`);
-the library (`@template/ui`) is placeholder code and stays private. Bump the version in
-`create/package.json` to republish the template — the release workflow publishes it whenever
-the local version differs from npm.
+What actually publishes differs by context, and the difference is entirely config-driven (same
+workflow both places):
+
+- **This template repo** publishes only the scaffolder (`create-react-native-library-template`).
+  `create/` is a Bun workspace member, so changesets versions it natively. The three
+  `@template/*` packages are `private` **and** listed in the changesets `ignore` array
+  (`.changeset/config.json`), so they are never versioned or published here — they are
+  placeholder code. Write changesets against `create-react-native-library-template`.
+- **Scaffolded projects** publish their library. The scaffolder strips `create` from the
+  root `workspaces`, removes `@template/ui` from the changesets `ignore` array, and drops its
+  `private` flag — so the library releases through this very same workflow once you rename the
+  `@template/*` packages to your own npm scope (update the same `ignore` array) and set `NPM_TOKEN`.
+
 `.github/workflows/deploy-storybook.yml` builds the web Storybook (`storybook/web`) on every
 push to `main` and deploys it to GitHub Pages (repo Settings → Pages → Source: GitHub Actions).
 
@@ -118,16 +128,19 @@ push to `main` and deploys it to GitHub Pages (repo Settings → Pages → Sourc
 ## Scaffolder (`create/`)
 
 `create/` holds `create-react-native-library-template`, the npm package behind
-`bun create react-native-library-template`. It is **not** a workspace: it has zero dependencies.
+`bun create react-native-library-template`. It is a Bun **workspace member** (so changesets
+versions and publishes it) but has zero runtime dependencies.
 Its `prepack` script snapshots every tracked file of this repo into `create/template/`,
 except `create/` itself, pending changesets, and any lines between `template-exclude:start` /
 `template-exclude:end` marker comments (used to keep repo-only workflow steps out of scaffolded
-projects). `.gitignore` files are shipped renamed to `gitignore` (npm strips them from tarballs);
-the CLI reverses this on scaffold. `postpack` deletes the snapshot.
+projects). It also rewrites a few files for the scaffold: strips `create` from the root
+`workspaces`, removes `@template/ui` from the changesets `ignore` array, and drops `private`
+from `packages/ui/package.json` — so the scaffolded library is publishable. `.gitignore` files
+are shipped renamed to `gitignore` (npm strips them from tarballs); the CLI reverses this on
+scaffold. `postpack` deletes the snapshot.
 
-The version is managed by the release workflow: the `version-packages` script runs `changeset
-version` and bumps the scaffolder patch version. Merging the Version PR bumps both the library
-changelog and the scaffolder version; the next push to `main` publishes `create-react-native-library-template`
-to npm whenever its local version differs from npm (requires `NPM_TOKEN`). Manual fallback:
-`cd create && npm publish`.
+Versioning and publishing go through changesets like any other package: write a changeset
+against `create-react-native-library-template`, merge the Version PR, and the next push to
+`main` runs `changeset publish` (which triggers `prepack` to build the snapshot). Manual
+fallback: `cd create && npm publish`.
 <!-- template-exclude:end -->

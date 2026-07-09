@@ -35,7 +35,7 @@ jobs:
       - name: Create release PR or publish to npm
         uses: changesets/action@v1
         with:
-          version: bun run changeset version
+          version: bun run version-packages
           publish: bun run release
           commit: 'chore: version packages'
           title: 'chore: version packages'

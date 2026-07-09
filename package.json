@@ -4,7 +4,8 @@
   "private": true,
   "workspaces": [
     "packages/*",
-    "storybook/*"
+    "storybook/*",
+    "create"
   ],
   "scripts": {
     "build": "bun run --cwd packages/ui build",
@@ -17,7 +18,8 @@
     "storybook": "bun run --cwd storybook/web storybook",
     "storybook:native": "bun run --cwd storybook/native start",
     "changeset": "changeset",
-    "version-packages": "node scripts/version-packages.mjs",
+    "version-packages": "changeset version",
+    "release": "bun run build && changeset publish",
     "prepare": "husky"
   },
   "devDependencies": {

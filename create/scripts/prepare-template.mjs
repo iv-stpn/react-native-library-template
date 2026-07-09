@@ -56,11 +56,28 @@ for (const file of trackedFiles) {
   } else cpSync(source, destination);
 }
 
-// Scaffolded projects should be able to publish their library. Strip `private` from
-// `packages/ui/package.json` — the flag exists in the template repo to prevent publishing
-// the placeholder `@template` scope from there, but a scaffolded project exists to publish.
+// The template repo and a scaffolded project have opposite release goals, so three files are
+// transformed in the snapshot (they can't use the comment-based template-exclude markers —
+// JSON has no comments):
+//
+// 1. `packages/ui/package.json`: drop `private`. In the repo the library is placeholder code
+//    kept unpublished; a scaffolded project exists to publish its library.
 const libraryPackageJsonPath = join(templateDir, 'packages/ui/package.json');
 const { private: _private, ...libraryPackageJson } = JSON.parse(readFileSync(libraryPackageJsonPath, 'utf8'));
 writeFileSync(libraryPackageJsonPath, `${JSON.stringify(libraryPackageJson, null, 2)}\n`);
+
+// 2. root `package.json`: drop `create` from `workspaces`. The scaffolder isn't shipped into
+//    scaffolded projects, so leaving it would make `bun install` fail on a missing workspace.
+const rootPackageJsonPath = join(templateDir, 'package.json');
+const rootPackageJson = JSON.parse(readFileSync(rootPackageJsonPath, 'utf8'));
+rootPackageJson.workspaces = rootPackageJson.workspaces.filter((glob) => glob !== 'create');
+writeFileSync(rootPackageJsonPath, `${JSON.stringify(rootPackageJson, null, 2)}\n`);
+
+// 3. `.changeset/config.json`: drop `@template/ui` from `ignore`. The repo ignores the library
+//    (only the scaffolder releases from here); a scaffolded project must release its library.
+const changesetConfigPath = join(templateDir, '.changeset/config.json');
+const changesetConfig = JSON.parse(readFileSync(changesetConfigPath, 'utf8'));
+changesetConfig.ignore = (changesetConfig.ignore ?? []).filter((name) => name !== '@template/ui');
+writeFileSync(changesetConfigPath, `${JSON.stringify(changesetConfig, null, 2)}\n`);
 
 console.log(`Copied ${trackedFiles.length} files into ${templateDir}`);
