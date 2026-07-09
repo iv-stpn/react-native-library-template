@@ -89,11 +89,11 @@ implementation. For a component named `Foo`:
 CI (`.github/workflows/ci.yml`) runs lint, typecheck, tests, build, and Storybook tests on
 every PR. On pushes to `main`, `.github/workflows/release.yml` uses changesets to open/update
 a "Version Packages" PR; merging it versions `@template/ui` and writes its changelog.
-`@template/ui` is marked `private`, so `changeset publish` versions it but never pushes the
-placeholder scope to npm (the template only publishes the `create/` scaffolder). To actually
-publish your library from a scaffolded project: rename the `@template/*` packages to your own
-npm scope, remove `"private": true` from `packages/ui/package.json`, and set the `NPM_TOKEN`
-repository secret. Never edit versions in `package.json` or `CHANGELOG.md` by hand.
+In this template repo `@template/ui` is marked `private`, so `changeset publish` versions it but
+never pushes the placeholder scope to npm (the template only publishes the `create/` scaffolder).
+The scaffolder strips that `private` flag, so a scaffolded project publishes its library on merge
+of the Version Packages PR once you rename the `@template/*` packages to your own npm scope and
+set the `NPM_TOKEN` repository secret. Never edit versions in `package.json` or `CHANGELOG.md` by hand.
 `.github/workflows/deploy-storybook.yml` builds the web Storybook (`storybook/web`) on every
 push to `main` and deploys it to GitHub Pages (repo Settings → Pages → Source: GitHub Actions).
 
@@ -111,6 +111,7 @@ push to `main` and deploys it to GitHub Pages (repo Settings → Pages → Sourc
 - The example app must stay on Expo SDK-pinned dependency versions (`bunx expo install ...`
   from `storybook/native` when adding native modules).
 
+<!-- template-exclude:start (this whole section documents create/, which scaffolded projects don't have) -->
 ## Scaffolder (`create/`)
 
 `create/` holds `create-react-native-library-template`, the npm package behind
@@ -118,10 +119,13 @@ push to `main` and deploys it to GitHub Pages (repo Settings → Pages → Sourc
 changesets: it has zero dependencies. Its `prepack` script snapshots every tracked file of
 this repo into `create/template/`, except `create/` itself, pending changesets, and any lines
 between `template-exclude:start` / `template-exclude:end` marker comments (used to keep
-repo-only workflow steps out of scaffolded projects). `.gitignore` files are shipped renamed
-to `gitignore` (npm strips them from tarballs); the CLI reverses this on scaffold. `postpack`
-deletes the snapshot.
+repo-only workflow steps out of scaffolded projects). It also strips `"private": true` from
+`packages/ui/package.json` in the snapshot — the flag guards the placeholder scope in this
+repo, but a scaffolded project exists to publish its library. `.gitignore` files are shipped
+renamed to `gitignore` (npm strips them from tarballs); the CLI reverses this on scaffold.
+`postpack` deletes the snapshot.
 
 To release it: bump the version in `create/package.json` and push to `main` — the release
 workflow publishes it (from `create/`) whenever the local version differs from npm. Manual
 fallback: `cd create && npm publish`.
+<!-- template-exclude:end -->

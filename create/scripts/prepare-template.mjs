@@ -28,12 +28,15 @@ function stripExcludedBlocks(content) {
   const lines = content.split('\n');
   const kept = [];
   let excluding = false;
+  // A marker is a real comment (`<!-- ... -->` or `# ...`). Ignore backtick-wrapped prose
+  // mentions of the tokens — AGENTS.md documents the marker names and must not self-truncate.
+  const hasMarker = (line, token) => line.includes(token) && !line.includes(`\`${token}\``);
   for (const line of lines) {
-    if (line.includes('template-exclude:start')) {
+    if (hasMarker(line, 'template-exclude:start')) {
       excluding = true;
       // Also drop the blank line that precedes the stripped block.
       if (kept.at(-1) === '') kept.pop();
-    } else if (line.includes('template-exclude:end')) excluding = false;
+    } else if (hasMarker(line, 'template-exclude:end')) excluding = false;
     else if (!excluding) kept.push(line);
   }
   return kept.join('\n');
@@ -50,5 +53,14 @@ for (const file of trackedFiles) {
   if (content.includes('template-exclude:start')) writeFileSync(destination, stripExcludedBlocks(content.toString('utf8')));
   else cpSync(source, destination);
 }
+
+// `@template/ui` is marked `private` in this repo so `changeset publish` versions it without
+// trying to push the placeholder `@template` scope to npm (which 404s). A scaffolded project
+// exists to publish its library, so strip `private` — its release workflow then publishes
+// `packages/ui` once the scope is renamed and NPM_TOKEN is set. (package.json is strict JSON,
+// so the comment-based template-exclude markers can't do this.)
+const libraryPackageJsonPath = join(templateDir, 'packages/ui/package.json');
+const { private: _private, ...libraryPackageJson } = JSON.parse(readFileSync(libraryPackageJsonPath, 'utf8'));
+writeFileSync(libraryPackageJsonPath, `${JSON.stringify(libraryPackageJson, null, 2)}\n`);
 
 console.log(`Copied ${trackedFiles.length} files into ${templateDir}`);
