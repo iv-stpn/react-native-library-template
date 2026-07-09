@@ -56,4 +56,11 @@ for (const file of trackedFiles) {
   } else cpSync(source, destination);
 }
 
+// Scaffolded projects should be able to publish their library. Strip `private` from
+// `packages/ui/package.json` — the flag exists in the template repo to prevent publishing
+// the placeholder `@template` scope from there, but a scaffolded project exists to publish.
+const libraryPackageJsonPath = join(templateDir, 'packages/ui/package.json');
+const { private: _private, ...libraryPackageJson } = JSON.parse(readFileSync(libraryPackageJsonPath, 'utf8'));
+writeFileSync(libraryPackageJsonPath, `${JSON.stringify(libraryPackageJson, null, 2)}\n`);
+
 console.log(`Copied ${trackedFiles.length} files into ${templateDir}`);
