@@ -17,7 +17,7 @@
     "storybook": "bun run --cwd storybook/web storybook",
     "storybook:native": "bun run --cwd storybook/native start",
     "changeset": "changeset",
-    "release": "bun run build && changeset publish",
+    "version-packages": "node scripts/version-packages.mjs",
     "prepare": "husky"
   },
   "devDependencies": {

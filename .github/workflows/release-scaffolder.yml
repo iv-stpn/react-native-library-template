@@ -1,21 +1,25 @@
-<!-- template-exclude:start this workflow publishes the scaffolder from the template repo; scaffolded projects don't have a create/ package -->
-name: Release scaffolder
+<!-- template-exclude:start this workflow publishes the scaffolder from the template repo; scaffolded projects use release.yml -->
+name: Release
 
 on:
   push:
     branches: [main]
 
-concurrency: release-scaffolder-${{ github.ref }}
+concurrency: release-${{ github.ref }}
 
 permissions:
+  contents: write
+  pull-requests: write
   id-token: write
 
 jobs:
   release:
-    name: Publish scaffolder
+    name: Version or publish
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - uses: oven-sh/setup-bun@v2
         with:
@@ -29,16 +33,21 @@ jobs:
       - name: Install dependencies
         run: bun install --frozen-lockfile
 
+      - name: Create release PR or publish to npm
+        uses: changesets/action@v1
+        with:
+          version: bun run version-packages
+          commit: 'chore: version packages'
+          title: 'chore: version packages'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
       - name: Publish create-react-native-library-template
         working-directory: create
         run: |
-          local_version=$(node -p "require('./package.json').version")
-          published_version=$(npm view create-react-native-library-template version 2>/dev/null || echo none)
-          if [ "$local_version" = "$published_version" ]; then
-            echo "create-react-native-library-template@$local_version is already on npm; skipping."
-          else
-            npm publish
-          fi
+          npm publish
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 <!-- template-exclude:end -->
