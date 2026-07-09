@@ -54,13 +54,4 @@ for (const file of trackedFiles) {
   else cpSync(source, destination);
 }
 
-// `@template/ui` is marked `private` in this repo so `changeset publish` versions it without
-// trying to push the placeholder `@template` scope to npm (which 404s). A scaffolded project
-// exists to publish its library, so strip `private` — its release workflow then publishes
-// `packages/ui` once the scope is renamed and NPM_TOKEN is set. (package.json is strict JSON,
-// so the comment-based template-exclude markers can't do this.)
-const libraryPackageJsonPath = join(templateDir, 'packages/ui/package.json');
-const { private: _private, ...libraryPackageJson } = JSON.parse(readFileSync(libraryPackageJsonPath, 'utf8'));
-writeFileSync(libraryPackageJsonPath, `${JSON.stringify(libraryPackageJson, null, 2)}\n`);
-
 console.log(`Copied ${trackedFiles.length} files into ${templateDir}`);

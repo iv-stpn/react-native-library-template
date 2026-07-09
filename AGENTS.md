@@ -88,12 +88,11 @@ implementation. For a component named `Foo`:
 
 CI (`.github/workflows/ci.yml`) runs lint, typecheck, tests, build, and Storybook tests on
 every PR. On pushes to `main`, `.github/workflows/release.yml` uses changesets to open/update
-a "Version Packages" PR; merging it versions `@template/ui` and writes its changelog.
-In this template repo `@template/ui` is marked `private`, so `changeset publish` versions it but
-never pushes the placeholder scope to npm (the template only publishes the `create/` scaffolder).
-The scaffolder strips that `private` flag, so a scaffolded project publishes its library on merge
-of the Version Packages PR once you rename the `@template/*` packages to your own npm scope and
-set the `NPM_TOKEN` repository secret. Never edit versions in `package.json` or `CHANGELOG.md` by hand.
+a "Version Packages" PR; merging it versions `@template/ui` and writes its changelog. The next
+push to `main` runs `changeset publish`, which publishes `@template/ui` to npm (requires an
+`NPM_TOKEN` repository secret). Scaffolded projects follow the same flow — rename the
+`@template/*` packages to your own npm scope and set `NPM_TOKEN`. Never edit versions in
+`package.json` or `CHANGELOG.md` by hand.
 `.github/workflows/deploy-storybook.yml` builds the web Storybook (`storybook/web`) on every
 push to `main` and deploys it to GitHub Pages (repo Settings → Pages → Source: GitHub Actions).
 
@@ -119,10 +118,8 @@ push to `main` and deploys it to GitHub Pages (repo Settings → Pages → Sourc
 changesets: it has zero dependencies. Its `prepack` script snapshots every tracked file of
 this repo into `create/template/`, except `create/` itself, pending changesets, and any lines
 between `template-exclude:start` / `template-exclude:end` marker comments (used to keep
-repo-only workflow steps out of scaffolded projects). It also strips `"private": true` from
-`packages/ui/package.json` in the snapshot — the flag guards the placeholder scope in this
-repo, but a scaffolded project exists to publish its library. `.gitignore` files are shipped
-renamed to `gitignore` (npm strips them from tarballs); the CLI reverses this on scaffold.
+repo-only workflow steps out of scaffolded projects). `.gitignore` files are shipped renamed
+to `gitignore` (npm strips them from tarballs); the CLI reverses this on scaffold.
 `postpack` deletes the snapshot.
 
 To release it: bump the version in `create/package.json` and push to `main` — the release
