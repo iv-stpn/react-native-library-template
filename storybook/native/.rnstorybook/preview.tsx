@@ -1,11 +1,11 @@
 import type { Preview } from '@storybook/react';
 import { View } from 'react-native';
+import '../global.css';
 
 const preview: Preview = {
   decorators: [
     (Story) => (
-      // biome-ignore lint/plugin: exception for storybook preview
-      <View style={{ flex: 1, alignItems: 'flex-start', padding: 16 }}>
+      <View className="flex-1 items-start p-4">
         <Story />
       </View>
     ),

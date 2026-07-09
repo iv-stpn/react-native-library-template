@@ -13,6 +13,9 @@ expo-env.d.ts
 # Storybook React Native (generated)
 storybook.requires.ts
 
+# Uniwind (generated type declarations for className autocomplete)
+uniwind-types.d.ts
+
 # Tests
 coverage/
 

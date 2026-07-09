@@ -1,0 +1,5 @@
+@import "tailwindcss";
+@import "uniwind";
+
+/* Stories live in the library workspace, so point Tailwind's class scanner there. */
+@source "../../packages/ui/src";

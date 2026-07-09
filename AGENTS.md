@@ -12,7 +12,9 @@ Tooling: **bun** (package manager + script runner), **biome** (lint + format), *
 (strict, `verbatimModuleSyntax` — use `import type` for types), **vitest** (unit tests via
 react-native-web in jsdom; story tests via `@storybook/addon-vitest` in Chromium),
 **react-native-builder-bob** (library build), **changesets** (versioning/publishing),
-**husky** (git hooks — a `pre-commit` hook runs lint, typecheck, and unit tests).
+**husky** (git hooks — a `pre-commit` hook runs lint, typecheck, and unit tests). Components are
+styled with **[Uniwind](https://uniwind.dev)** (Tailwind CSS 4 `className` for React Native) plus
+**[cva](https://cva.style)** for variants — see [Styling](#styling-uniwind).
 
 ## Commands (run from the repo root)
 
@@ -41,17 +43,21 @@ implementation. For a component named `Foo`:
 
    **No `index.ts`** — barrel files are forbidden everywhere in the library. Public entry
    points are declared in the `exports` map of `packages/ui/package.json` (step 3), and
-   internal imports always target the concrete file (`../../theme/tokens`), never a folder.
+   internal imports always target the concrete file (`../../components/Button/button`), never a folder.
 2. **Write the component** (`foo.tsx`):
    - Named function export (`export function Foo(...)`), never a default export.
    - Export a `FooProps` interface with a JSDoc comment per prop; document defaults with `@default`.
    - Only import from `react`, `react-native`, and internal modules. New runtime dependencies
      need explicit approval — they become dependencies for every consumer of the library.
-   - Use only RN APIs that exist on react-native-web (`View`, `Text`, `Pressable`,
-     `StyleSheet`, ...), otherwise unit tests and the web Storybook will break.
-   - Style with `StyleSheet.create` and the design tokens from `src/theme/tokens.ts` (`colors`,
-     `spacing`, `radii`, `fontSizes`) — no hard-coded colors or magic numbers. Add new tokens
-     to `src/theme/tokens.ts` if needed.
+   - Use only RN APIs that exist on react-native-web (`View`, `Text`, `Pressable`, ...),
+     otherwise unit tests and the web Storybook will break.
+   - Style with Tailwind `className` (resolved by [Uniwind](https://uniwind.dev)) — no
+     `StyleSheet.create`, no hard-coded colors or magic numbers. Compose variants with
+     [`class-variance-authority`](https://cva.style) (`cva`), following `Button` as the
+     reference. Keep class strings as static literals so Tailwind's scanner can see them.
+     `View`/`Text`/`Pressable` take `className`; `ActivityIndicator` takes `colorClassName`
+     (see the full prop list in `uniwind/types`). Still accept a `style` prop for escape-hatch
+     overrides.
    - Accessibility is required: set `accessibilityRole`, `accessibilityState`, and accept an
      `accessibilityLabel` prop. Also accept `style` (as `StyleProp<...>`) and `testID`.
 3. **Export it from the library**: add a `./foo` subpath to the `exports` map in
@@ -83,6 +89,29 @@ implementation. For a component named `Foo`:
 7. **Add a changeset**: `bun run changeset` → select `@template/ui`, pick `minor` for a new
    component (`patch` for fixes, `major` for breaking changes), write a one-line summary.
    Commit the generated `.changeset/*.md` file with your change.
+
+## Styling (Uniwind)
+
+The library styles React Native components with Tailwind classes through
+[Uniwind](https://uniwind.dev), the Tailwind provider for React Native. There is no runtime
+provider to mount: Uniwind rewrites `react-native` imports to className-aware components in the
+**bundler**, so components just import from `react-native` and set `className`. That rewrite is
+configured once per app, and the three pieces below are already wired in this repo:
+
+- **Native (Metro)** — `storybook/native/metro.config.js` wraps the config with
+  `withUniwindConfig(...)` from `uniwind/metro`, as the **outermost** wrapper. `cssEntryFile`
+  must be a plain relative string.
+- **Web (Vite)** — `storybook/web/.storybook/main.ts` adds `@tailwindcss/vite` and
+  `uniwind({...})` from `uniwind/vite` in `viteFinal`.
+- **CSS entry** — each Storybook has a `global.css` (`@import 'tailwindcss'; @import 'uniwind';`)
+  imported from its `preview`. Because components live in `packages/ui`, each `global.css` has an
+  `@source '../../packages/ui/src'` so Tailwind's scanner finds the class strings there.
+
+`className` typechecks via a per-workspace `uniwind-env.d.ts` (`/// <reference types="uniwind/types" />`),
+which augments `react-native` to add `className`/`colorClassName`. Uniwind's generated
+`uniwind-types.d.ts` (theme-aware autocomplete) is gitignored. Unit tests need none of this:
+they run in jsdom on react-native-web, which passes `className` through harmlessly, and they
+assert behavior by role/name — never computed styles.
 
 ## Releasing
 

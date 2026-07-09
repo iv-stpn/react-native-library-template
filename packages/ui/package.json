@@ -21,11 +21,6 @@
       "types": "./lib/typescript/components/Button/button.d.ts",
       "default": "./lib/module/components/Button/button.js"
     },
-    "./theme": {
-      "source": "./src/theme/tokens.ts",
-      "types": "./lib/typescript/theme/tokens.d.ts",
-      "default": "./lib/module/theme/tokens.js"
-    },
     "./package.json": "./package.json"
   },
   "files": [
@@ -45,7 +40,7 @@
   "react-native-builder-bob": {
     "source": "src",
     "output": "lib",
-    "exclude": "**/{*.test,*.stories}.{ts,tsx}",
+    "exclude": "**/*.{test,stories,d}.{ts,tsx}",
     "targets": [
       [
         "module",
@@ -73,10 +68,19 @@
     "react-native-builder-bob": "^0.43.0",
     "react-native-web": "0.21.2",
     "storybook": "^10.4.6",
+    "tailwindcss": "^4.3.2",
     "typescript": "^6",
+    "uniwind": "^1.10.0",
     "vitest": "^4.1.10"
   },
   "publishConfig": {
     "access": "public"
+  },
+  "dependencies": {
+    "class-variance-authority": "^0.7.1"
+  },
+  "peerDependencies": {
+    "tailwindcss": "^4.3.2",
+    "uniwind": "^1.10.0"
   }
 }
