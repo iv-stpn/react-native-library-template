@@ -1,6 +1,6 @@
 {
   "name": "create-react-native-library-template",
-  "version": "0.1.5",
+  "version": "0.2.0",
   "description": "Scaffold a React Native UI library monorepo: Bun workspaces, Expo, Storybook (web + native), Vitest, Biome and Changesets",
   "license": "MIT",
   "type": "module",
