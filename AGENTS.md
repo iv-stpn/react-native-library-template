@@ -87,14 +87,16 @@ implementation. For a component named `Foo`:
 ## Releasing
 
 CI (`.github/workflows/ci.yml`) runs lint, typecheck, tests, build, and Storybook tests on
-every PR. On pushes to `main`, `.github/workflows/release.yml` uses changesets to open/update
-a "Version Packages" PR; merging it versions `@template/ui` and writes its changelog (the
-library itself stays `private`, so `changeset publish` skips it — this is a template repo,
-the library is for scaffolded projects). The Version PR also bumps the scaffolder version;
-the next push to `main` publishes `create-react-native-library-template` to npm (requires
-`NPM_TOKEN`). Scaffolded projects follow the same flow — rename the `@template/*` packages
-to your own npm scope and set `NPM_TOKEN`. Never edit versions in `package.json` or
-`CHANGELOG.md` by hand.
+every PR. Scaffolded projects use changesets: on pushes to `main`, `.github/workflows/release.yml`
+opens/updates a "Version Packages" PR; merging it versions the library and writes its changelog.
+The next push to `main` runs `changeset publish`, which publishes the library to npm (requires
+`NPM_TOKEN` repository secret and the package renamed from `@template/*` to your own scope).
+Never edit versions in `package.json` or `CHANGELOG.md` by hand.
+
+This template repo publishes only the scaffolder (`create-react-native-library-template`);
+the library (`@template/ui`) is placeholder code and stays private. Bump the version in
+`create/package.json` to republish the template — the release workflow publishes it whenever
+the local version differs from npm.
 `.github/workflows/deploy-storybook.yml` builds the web Storybook (`storybook/web`) on every
 push to `main` and deploys it to GitHub Pages (repo Settings → Pages → Source: GitHub Actions).
 

@@ -50,8 +50,10 @@ for (const file of trackedFiles) {
   mkdirSync(dirname(destination), { recursive: true });
   const source = join(repoRoot, file);
   const content = readFileSync(source);
-  if (content.includes('template-exclude:start')) writeFileSync(destination, stripExcludedBlocks(content.toString('utf8')));
-  else cpSync(source, destination);
+  if (content.includes('template-exclude:start')) {
+    const stripped = stripExcludedBlocks(content.toString('utf8'));
+    if (stripped.trim().length > 0) writeFileSync(destination, stripped);
+  } else cpSync(source, destination);
 }
 
 console.log(`Copied ${trackedFiles.length} files into ${templateDir}`);
