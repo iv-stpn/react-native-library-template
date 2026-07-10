@@ -9,10 +9,12 @@ Monorepo for a publishable React Native UI library. Bun workspaces:
 | `storybook/native` | `@template/example` | Expo app running Storybook React Native on device. |
 
 Tooling: **bun** (package manager + script runner), **biome** (lint + format), **TypeScript 6**
-(strict, `verbatimModuleSyntax` — use `import type` for types), **vitest** (unit tests via
-react-native-web in jsdom; story tests via `@storybook/addon-vitest` in Chromium),
+(strict, `verbatimModuleSyntax` — use `import type` for types), **vitest** (story tests via
+`@storybook/addon-vitest` in Chromium, and the runner behind on-device component tests via
+[`vitest-mobile`](https://github.com/phantom/vitest-mobile) — real React Native views + real
+touch events on a booted simulator/emulator; see [Testing](#testing)),
 **react-native-builder-bob** (library build), **changesets** (versioning/publishing),
-**husky** (git hooks — a `pre-commit` hook runs lint, typecheck, and unit tests). Components are
+**husky** (git hooks — a `pre-commit` hook runs lint and typecheck). Components are
 styled with **[Uniwind](https://uniwind.dev)** (Tailwind CSS 4 `className` for React Native) plus
 **[cva](https://cva.style)** for variants — see [Styling](#styling-uniwind).
 
@@ -23,9 +25,9 @@ styled with **[Uniwind](https://uniwind.dev)** (Tailwind CSS 4 `className` for R
 | `bun install` | Install all workspaces. |
 | `bun run lint` / `bun run lint:fix` | Biome check / autofix. |
 | `bun run typecheck` | `tsc --noEmit` in every workspace. |
-| `bun run test:unit` | Vitest unit tests in `packages/ui`. |
 | `bun run test:storybook` | Runs every story as a Vitest browser test (needs `bunx playwright install chromium` once). |
-| `bun run test` | Both of the above. |
+| `bun run test` | Alias for `test:storybook` (the only device-free suite). |
+| `bun run test:native:ios` / `test:native:android` | On-device component tests via `vitest-mobile` (needs a booted simulator/emulator — see [Testing](#testing)). |
 | `bun run build` | Builds the library with bob into `packages/ui/lib`. |
 | `bun run storybook` | Web Storybook at http://localhost:6006. |
 | `bun run storybook:native` | Expo dev server for the on-device Storybook. |
@@ -38,8 +40,11 @@ implementation. For a component named `Foo`:
 
 1. **Create the folder** `packages/ui/src/components/Foo/` containing exactly:
    - `foo.tsx` — the component.
-   - `foo.test.tsx` — vitest unit tests.
    - `foo.stories.tsx` — Storybook stories (CSF3), including at least one `play` function.
+
+   The on-device test lives separately in `storybook/native/tests/` (step 5), **not** in this
+   folder — `vitest-mobile` discovers tests via `require.context(appDir, …)` rooted at the
+   native app, which cannot reach up into `packages/ui`.
 
    **No `index.ts`** — barrel files are forbidden everywhere in the library. Public entry
    points are declared in the `exports` map of `packages/ui/package.json` (step 3), and
@@ -49,8 +54,8 @@ implementation. For a component named `Foo`:
    - Export a `FooProps` interface with a JSDoc comment per prop; document defaults with `@default`.
    - Only import from `react`, `react-native`, and internal modules. New runtime dependencies
      need explicit approval — they become dependencies for every consumer of the library.
-   - Use only RN APIs that exist on react-native-web (`View`, `Text`, `Pressable`, ...),
-     otherwise unit tests and the web Storybook will break.
+   - Prefer RN APIs that exist on react-native-web (`View`, `Text`, `Pressable`, ...) so the
+     web Storybook renders; the on-device tests run on real `react-native` and do not need this.
    - Style with Tailwind `className` (resolved by [Uniwind](https://uniwind.dev)) — no
      `StyleSheet.create`, no hard-coded colors or magic numbers. Compose variants with
      [`class-variance-authority`](https://cva.style) (`cva`), following `Button` as the
@@ -78,17 +83,65 @@ implementation. For a component named `Foo`:
      asserting behavior (`within`, `userEvent`, `expect` from `storybook/test`).
    - Stories are shared by the web and native Storybooks — keep them platform-neutral and
      import types only from `@storybook/react` (type-only imports are erased at runtime).
-5. **Write unit tests** (`foo.test.tsx`) with `@testing-library/react`. They run in jsdom with
-   `react-native` aliased to `react-native-web`. Query by accessible role/name
-   (`screen.getByRole('button', { name: ... })`), and cover: rendering, interaction callbacks,
-   and disabled/edge states.
-6. **Verify** from the repo root — all must pass:
+5. **Write on-device tests** under `storybook/native/tests/` (e.g. `tests/foo.test.tsx`) with
+   [`vitest-mobile`](https://github.com/phantom/vitest-mobile). Tests run **inside a real RN app on a
+   booted simulator/emulator** — so they live in the `@template/example` app (the only workspace with
+   the New Architecture `vitest-mobile` needs), not colocated in `packages/ui`, because `vitest-mobile`
+   discovers them via `require.context(appDir, …)`, which cannot look outside the app. Import
+   `@template/ui/foo` and `render`/`cleanup` from `vitest-mobile/runtime`; everything is **async**
+   (`await render(...)`, `await locator.tap()`, `await expect.element(...).toHaveText(...)`). Query by
+   `testID`/text, drive interaction with `.tap()`/`.type()`, and assert with `toHaveText`/`toContainText`/
+   `toBeVisible`. There is no in-process callback spy on-device: observe a prop like `onPress` through a
+   **visible state change** (see `tests/button.test.tsx`, which wraps `Button` in a counter). Never assert
+   computed styles — Uniwind's `className` is behavior-neutral.
+6. **Verify** from the repo root — lint, typecheck, build, and the web Storybook tests must pass:
    ```sh
-   bun run lint && bun run typecheck && bun run test:unit && bun run build && bun run test:storybook
+   bun run lint && bun run typecheck && bun run build && bun run test:storybook
    ```
+   The on-device tests need a simulator/emulator, so run them separately when you have one —
+   e.g. iOS: `bun run --cwd storybook/native test:native:ios:bootstrap` (first run) then
+   `bun run test:native:ios`. Use the `:android:*` variants for Android.
 7. **Add a changeset**: `bun run changeset` → select `@template/ui`, pick `minor` for a new
    component (`patch` for fixes, `major` for breaking changes), write a one-line summary.
    Commit the generated `.changeset/*.md` file with your change.
+
+## Testing
+
+Two independent test layers, by design:
+
+- **Story tests (device-free, runs everywhere).** `bun run test:storybook` runs every story in
+  `storybook/web` as a Vitest browser test in Chromium (`@storybook/addon-vitest`). This is the
+  fast suite: it runs in CI on `ubuntu-latest`, and `bun run test` aliases to it. It needs
+  `bunx playwright install chromium` once. Story `play` functions assert interaction behavior on
+  react-native-web.
+- **On-device component tests (needs a simulator/emulator).** `bun run test:native:ios` (or
+  `test:native:android`) runs the tests under `storybook/native/tests/` with
+  [`vitest-mobile`](https://github.com/phantom/vitest-mobile): it boots a simulator/emulator, builds
+  and launches the `@template/example` RN app, and streams tests to it over WebSocket, driving
+  **real native views and touch events**. This is why the tests live in the app and not in
+  `packages/ui` (see the component checklist, step 5).
+
+`vitest-mobile` prerequisites (from its README): Node ≥ 18, RN ≥ 0.81.5 with the **New
+Architecture** (the example app has `newArchEnabled: true`), and a platform toolchain — **iOS
+needs Xcode ≥ 15** (macOS only); Android needs SDK API 35 + Java 17. Because the on-device engine
+loads the app through the project's own `metro.config.js`, Uniwind's `className` resolves exactly
+as it does at runtime — no test-only styling shim.
+
+First run on a machine (builds the native harness, ~5 min, then cached). Pick the platform your
+toolchain supports — iOS shown; swap `ios` → `android` on Linux+KVM:
+
+```sh
+bun run --cwd storybook/native test:native:ios:bootstrap   # build + boot + install the harness app
+bun run test:native:ios                                    # == vitest run --project ios in storybook/native
+```
+
+**CI:** `.github/workflows/ci.yml` runs these on separate runners — the `checks` job
+(lint/typecheck/build/story tests) on `ubuntu-latest`, plus two on-device jobs following the
+`vitest-mobile` README recipes: `native-ios` on `macos-latest` and `native-android` on
+`ubuntu-latest` (KVM + SDK 35 + Java 17). Both do `bootstrap --headless` → `bundle` →
+`vitest run --project <platform>`. GitHub's macOS runners are free for **public** repos; a
+**private** project scaffolded from this template that keeps the iOS job will bill macOS minutes
+at ~10× — drop it and keep only `native-android` if that matters.
 
 ## Styling (Uniwind)
 
@@ -109,14 +162,18 @@ configured once per app, and the three pieces below are already wired in this re
 
 `className` typechecks via a per-workspace `uniwind-env.d.ts` (`/// <reference types="uniwind/types" />`),
 which augments `react-native` to add `className`/`colorClassName`. Uniwind's generated
-`uniwind-types.d.ts` (theme-aware autocomplete) is gitignored. Unit tests need none of this:
-they run in jsdom on react-native-web, which passes `className` through harmlessly, and they
-assert behavior by role/name — never computed styles.
+`uniwind-types.d.ts` (theme-aware autocomplete) is gitignored. The on-device tests exercise
+`className` for real: they run inside the native Storybook app, whose Metro config already wraps
+`withUniwindConfig`, so Uniwind's bundler rewrite applies. Tests still assert behavior by
+`testID`/text — never computed styles.
 
 ## Releasing
 
-CI (`.github/workflows/ci.yml`) runs lint, typecheck, tests, build, and Storybook tests on
-every PR. Releasing is driven entirely by changesets: on pushes to `main`,
+CI (`.github/workflows/ci.yml`) runs three jobs on every PR: a `ubuntu-latest` `checks` job
+(lint, typecheck, build, Storybook browser tests), plus two on-device `vitest-mobile` jobs —
+`native-ios` on `macos-latest` and `native-android` on `ubuntu-latest` (each boots its
+simulator/emulator, builds the harness, and runs its `--project`).
+Releasing is driven entirely by changesets: on pushes to `main`,
 `.github/workflows/release.yml` opens/updates a "Version Packages" PR; merging it runs
 `changeset version` (bumping versions and writing changelogs) and the next push runs
 `bun run release` (`changeset publish`) to publish to npm. It needs the `NPM_TOKEN` repository
@@ -141,11 +198,19 @@ push to `main` and deploys it to GitHub Pages (repo Settings → Pages → Sourc
 
 ## Gotchas
 
-- The husky `pre-commit` hook (`.husky/pre-commit`) runs `bun run lint`, `bun run typecheck`,
-  and `bun run test:unit` before every commit. Hooks install via the `prepare` script on
-  `bun install`. It does not run the Storybook browser tests (they need Chromium) — run
-  `bun run test:storybook` yourself before pushing, since CI does. To bypass the hook in a
-  pinch, commit with `--no-verify`.
+- The husky `pre-commit` hook (`.husky/pre-commit`) runs `bun run lint` and `bun run typecheck`
+  before every commit. Hooks install via the `prepare` script on `bun install`. It does **not**
+  run any tests: the Storybook browser tests need Chromium and the `vitest-mobile` tests need a
+  booted simulator/emulator — run `bun run test:storybook` (and `bun run test:native:ios` /
+  `test:native:android` if you have a device set up) yourself before pushing, since CI does. To
+  bypass the hook, commit `--no-verify`.
+- On-device tests (`bun run test:native:ios` / `test:native:android`) need a native toolchain: **Xcode ≥ 15** for iOS or
+  **Android SDK 35 + Java 17 (+ KVM on Linux)** for Android, plus a booted simulator/emulator.
+  `vitest-mobile bootstrap` builds the harness app (~5 min first run, then cached under
+  `~/.cache/vitest-mobile`). The host app is `storybook/native` (`@template/example`) — the only
+  workspace with the New Architecture `vitest-mobile` requires. Tests live in
+  `storybook/native/tests/` (not colocated in `packages/ui`) because `vitest-mobile` discovers
+  them via `require.context(appDir, …)`, which cannot look above the app directory.
 - `storybook/native/.rnstorybook/storybook.requires.ts` is generated (by Metro or
   `bun run --cwd storybook/native storybook-generate`) and gitignored — never edit it.
 - Test/story files are excluded from the published package and from the bob build; keep

@@ -33,9 +33,7 @@
   "scripts": {
     "build": "bob build",
     "clean": "rm -rf lib",
-    "typecheck": "tsc --noEmit",
-    "test": "vitest run",
-    "test:watch": "vitest"
+    "typecheck": "tsc --noEmit"
   },
   "react-native-builder-bob": {
     "source": "src",
@@ -58,20 +56,14 @@
   },
   "devDependencies": {
     "@storybook/react": "^10.4.6",
-    "@testing-library/jest-dom": "^6.9.1",
-    "@testing-library/react": "^16.3.2",
     "@types/react": "~19.1.10",
-    "jsdom": "^29.1.1",
     "react": "19.1.0",
-    "react-dom": "19.1.0",
     "react-native": "0.81.5",
     "react-native-builder-bob": "^0.43.0",
-    "react-native-web": "0.21.2",
     "storybook": "^10.4.6",
     "tailwindcss": "^4.3.2",
     "typescript": "^6",
-    "uniwind": "^1.10.0",
-    "vitest": "^4.1.10"
+    "uniwind": "^1.10.0"
   },
   "publishConfig": {
     "access": "public"

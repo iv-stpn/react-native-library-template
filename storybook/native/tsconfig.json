@@ -3,6 +3,12 @@
   "compilerOptions": {
     "lib": ["ES2023"]
   },
-  "include": ["**/*.ts", "**/*.tsx"],
-  "exclude": ["node_modules"]
+  "include": ["**/*.ts", "**/*.tsx", "vitest.config.mts"],
+  // `tests/` holds vitest-mobile on-device tests. They import `vitest-mobile/runtime`,
+  // whose shipped *types* are its raw `.ts` source (no `.d.ts`), and that beta source
+  // does not pass this repo's strict config — so any file importing it fails `tsc`
+  // (`skipLibCheck` only skips `.d.ts`). Metro/Babel transform these tests on-device
+  // without type info anyway, so they are excluded from the workspace typecheck, the
+  // same way the generated `.rnstorybook` requires file is not hand-typechecked.
+  "exclude": ["node_modules", "tests"]
 }

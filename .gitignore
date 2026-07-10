@@ -19,6 +19,9 @@ uniwind-types.d.ts
 # Tests
 coverage/
 
+# vitest-mobile (generated harness scratch: Metro output, device instance state)
+.vitest-mobile/
+
 # Misc
 *.log
 .DS_Store

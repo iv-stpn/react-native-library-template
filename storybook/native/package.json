@@ -8,7 +8,13 @@
     "android": "expo start --android",
     "ios": "expo start --ios",
     "storybook-generate": "sb-rn-get-stories",
-    "typecheck": "bun run storybook-generate && tsc --noEmit"
+    "typecheck": "bun run storybook-generate && tsc --noEmit",
+    "test:native:ios": "vitest run --project ios",
+    "test:native:ios:bootstrap": "vitest-mobile bootstrap --platform ios",
+    "test:native:ios:bundle": "vitest-mobile bundle --platform ios",
+    "test:native:android": "vitest run --project android",
+    "test:native:android:bootstrap": "vitest-mobile bootstrap --platform android",
+    "test:native:android:bundle": "vitest-mobile bundle --platform android"
   },
   "dependencies": {
     "@gorhom/bottom-sheet": "^5.2.14",
@@ -37,6 +43,8 @@
   "devDependencies": {
     "@types/react": "~19.1.10",
     "babel-preset-expo": "~54.0.10",
-    "typescript": "^6"
+    "typescript": "^6",
+    "vitest": "^4.1.10",
+    "vitest-mobile": "^0.4.3"
   }
 }
