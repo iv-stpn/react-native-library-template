@@ -2,8 +2,7 @@
 // biome-ignore-all lint/style/noProcessEnv: mirrors vitest-mobile's own cache-dir resolution
 // biome-ignore-all lint/correctness/noProcessGlobal: metro configs run in Node; process is available and expected here
 
-import process from 'node:process';
-
+const process = require('node:process');
 const path = require('node:path');
 const { withStorybook } = require('@storybook/react-native/metro/withStorybook');
 const { getDefaultConfig } = require('expo/metro-config');
