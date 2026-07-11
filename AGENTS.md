@@ -14,7 +14,7 @@ Tooling: **bun** (package manager + script runner), **biome** (lint + format), *
 [`vitest-mobile`](https://github.com/phantom/vitest-mobile) — real React Native views + real
 touch events on a booted simulator/emulator; see [Testing](#testing)),
 **react-native-builder-bob** (library build), **changesets** (versioning/publishing),
-**husky** (git hooks — a `pre-commit` hook runs lint and typecheck). Components are
+**husky** (git hooks — a `pre-commit` hook runs lint, typecheck, and the device-free tests). Components are
 styled with **[Uniwind](https://uniwind.dev)** (Tailwind CSS 4 `className` for React Native) plus
 **[cva](https://cva.style)** for variants — see [Styling](#styling-uniwind).
 
@@ -27,7 +27,7 @@ styled with **[Uniwind](https://uniwind.dev)** (Tailwind CSS 4 `className` for R
 | `bun run typecheck` | `tsc --noEmit` in every workspace. |
 | `bun run test:storybook` | Runs every story as a Vitest browser test (needs `bunx playwright install chromium` once). |
 | `bun run test` | Alias for `test:storybook` (the only device-free suite). |
-| `bun run test:native:ios` / `test:native:android` | On-device component tests via `vitest-mobile` (needs a booted simulator/emulator — see [Testing](#testing)). |
+| `bun run test:native:ios` / `test:native:android` | On-device component tests via `vitest-mobile`. Normally run by CI, not locally — see [Testing](#testing). |
 | `bun run build` | Builds the library with bob into `packages/ui/lib`. |
 | `bun run storybook` | Web Storybook at http://localhost:6006. |
 | `bun run storybook:native` | Expo dev server for the on-device Storybook. |
@@ -98,28 +98,33 @@ implementation. For a component named `Foo`:
    ```sh
    bun run lint && bun run typecheck && bun run build && bun run test:storybook
    ```
-   The on-device tests need a simulator/emulator, so run them separately when you have one —
-   e.g. iOS: `bun run --cwd storybook/native test:native:ios:bootstrap` (first run) then
-   `bun run test:native:ios`. Use the `:android:*` variants for Android.
+   Always run this device-free suite yourself. Do **not** run the on-device tests
+   (`test:native:ios` / `test:native:android`) locally — CI runs them on every PR
+   (see [Testing](#testing)); just make sure the new `tests/foo.test.tsx` exists so CI picks it up.
 7. **Add a changeset**: `bun run changeset` → select `@template/ui`, pick `minor` for a new
    component (`patch` for fixes, `major` for breaking changes), write a one-line summary.
    Commit the generated `.changeset/*.md` file with your change.
 
 ## Testing
 
-Two independent test layers, by design:
+Two independent test layers, by design — with a clear division of responsibility:
 
-- **Story tests (device-free, runs everywhere).** `bun run test:storybook` runs every story in
-  `storybook/web` as a Vitest browser test in Chromium (`@storybook/addon-vitest`). This is the
-  fast suite: it runs in CI on `ubuntu-latest`, and `bun run test` aliases to it. It needs
-  `bunx playwright install chromium` once. Story `play` functions assert interaction behavior on
-  react-native-web.
-- **On-device component tests (needs a simulator/emulator).** `bun run test:native:ios` (or
+- **Story tests (device-free) — always run these yourself.** `bun run test:storybook` runs every
+  story in `storybook/web` as a Vitest browser test in Chromium (`@storybook/addon-vitest`). This
+  is the fast suite: `bun run test` aliases to it, the husky pre-commit hook runs it, and CI runs
+  it on `ubuntu-latest`. It needs `bunx playwright install chromium` once. Story `play` functions
+  assert interaction behavior on react-native-web. Run it before every commit/push — it is the
+  baseline verification for any change.
+- **On-device component tests — leave these to CI.** `bun run test:native:ios` (or
   `test:native:android`) runs the tests under `storybook/native/tests/` with
   [`vitest-mobile`](https://github.com/phantom/vitest-mobile): it boots a simulator/emulator, builds
   and launches the `@template/example` RN app, and streams tests to it over WebSocket, driving
   **real native views and touch events**. This is why the tests live in the app and not in
-  `packages/ui` (see the component checklist, step 5).
+  `packages/ui` (see the component checklist, step 5). **Do not run these locally by default** —
+  they need a native toolchain and a booted simulator/emulator, and CI runs both platforms on
+  every PR (see below). Still *write* on-device tests for new components (checklist step 5);
+  push and let CI execute them. Run them locally only when explicitly asked to, or when debugging
+  a CI failure on a machine that already has the toolchain — the setup below is for those cases.
 
 `vitest-mobile` prerequisites (from its README): Node ≥ 18, RN ≥ 0.81.5 with the **New
 Architecture** (the example app has `newArchEnabled: true`), and a platform toolchain — **iOS
@@ -142,8 +147,9 @@ as it does at runtime — no test-only styling shim.
   The file is a CommonJS module — use `__dirname`, never `import.meta.dirname` (which crashes the
   `require()` load under Node's ESM auto-detection).
 
-First run on a machine (builds the native harness, ~5 min, then cached). Pick the platform your
-toolchain supports — iOS shown; swap `ios` → `android` on Linux+KVM:
+**Local on-device runs (debugging only — CI is the normal path).** First run on a machine builds
+the native harness (~5 min, then cached). Pick the platform your toolchain supports — iOS shown;
+swap `ios` → `android` on Linux+KVM:
 
 ```sh
 bun run --cwd storybook/native test:native:ios:bootstrap   # build + boot + install the harness app
@@ -219,13 +225,14 @@ push to `main` and deploys it to GitHub Pages (repo Settings → Pages → Sourc
 
 ## Gotchas
 
-- The husky `pre-commit` hook (`.husky/pre-commit`) runs `bun run lint` and `bun run typecheck`
-  before every commit. Hooks install via the `prepare` script on `bun install`. It does **not**
-  run any tests: the Storybook browser tests need Chromium and the `vitest-mobile` tests need a
-  booted simulator/emulator — run `bun run test:storybook` (and `bun run test:native:ios` /
-  `test:native:android` if you have a device set up) yourself before pushing, since CI does. To
-  bypass the hook, commit `--no-verify`.
-- On-device tests (`bun run test:native:ios` / `test:native:android`) need a native toolchain: **Xcode ≥ 15** for iOS or
+- The husky `pre-commit` hook (`.husky/pre-commit`) runs `bun run lint`, `bun run typecheck`, and
+  `bun run test` (the device-free Storybook browser tests — needs
+  `bunx playwright install chromium` once) before every commit. Hooks install via the `prepare`
+  script on `bun install`. It deliberately does **not** run the on-device `vitest-mobile` tests —
+  those need a booted simulator/emulator and are CI's job (never add them to the hook). To bypass
+  the hook, commit `--no-verify`.
+- On-device tests (`bun run test:native:ios` / `test:native:android`) are run by CI; run them
+  locally only for debugging. They need a native toolchain: **Xcode ≥ 15** for iOS or
   **Android SDK 35 + Java 17 (+ KVM on Linux)** for Android, plus a booted simulator/emulator.
   `vitest-mobile bootstrap` builds the harness app (~5 min first run, then cached under
   `~/.cache/vitest-mobile`). The host app is `storybook/native` (`@template/example`) — the only
