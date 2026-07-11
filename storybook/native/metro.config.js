@@ -1,4 +1,9 @@
-/** biome-ignore-all lint/style/noCommonJs: exception for metro config */
+// biome-ignore-all lint/style/noCommonJs: exception for metro config
+// biome-ignore-all lint/style/noProcessEnv: mirrors vitest-mobile's own cache-dir resolution
+// biome-ignore-all lint/correctness/noProcessGlobal: metro configs run in Node; process is available and expected here
+
+import process from 'node:process';
+
 const path = require('node:path');
 const { withStorybook } = require('@storybook/react-native/metro/withStorybook');
 const { getDefaultConfig } = require('expo/metro-config');
@@ -35,8 +40,6 @@ const finalConfig = withUniwindConfig(
 // would otherwise set up are missing and must be reproduced here. Both are scoped
 // to test runs via VITEST_MOBILE_APP_ROOT (set by vitest-mobile before it loads
 // this file), leaving `expo start` / Storybook completely untouched.
-// biome-ignore lint/style/noProcessEnv: VITEST_MOBILE_APP_ROOT is the only signal vitest-mobile exposes to detect a test run
-// biome-ignore lint/correctness/noProcessGlobal: metro configs run in Node; process is available and expected here
 if (process.env.VITEST_MOBILE_APP_ROOT) {
   const fs = require('node:fs');
   const projectRequire = require('node:module').createRequire(path.join(projectRoot, 'package.json'));
@@ -45,8 +48,6 @@ if (process.env.VITEST_MOBILE_APP_ROOT) {
   // (`<cacheDir>/builds/<hash>/project`). It holds the RN/Metro toolchain the harness
   // bundle is built against (react-native, metro-runtime, @babel/runtime, …). Pick the
   // newest fully-customized one.
-  // biome-ignore lint/style/noProcessEnv: mirrors vitest-mobile's own cache-dir resolution
-  // biome-ignore lint/correctness/noProcessGlobal: metro configs run in Node; process is available and expected here
   const cacheDir =
     process.env.VITEST_MOBILE_CACHE_DIR ||
     process.env.VITEST_NATIVE_CACHE_DIR ||
