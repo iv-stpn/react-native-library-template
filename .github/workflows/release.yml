@@ -15,6 +15,14 @@ jobs:
   release:
     name: Version or publish
     runs-on: ubuntu-latest
+    # The changesets action git-commits the version bump ("chore: version
+    # packages") and publish tags. That commit would fire the husky pre-commit
+    # hook, which runs the Playwright/Vitest browser story tests — but this
+    # runner never installs Chromium (only the CI `checks` job does), so the
+    # hook fails and takes the release with it. Skip hooks here: the `checks`
+    # job already runs lint/typecheck/build/story tests on every push and PR.
+    env:
+      HUSKY: 0
     steps:
       - uses: actions/checkout@v4
         with:
