@@ -64,9 +64,31 @@ jobs:
       - name: Install dependencies
         run: bun install --frozen-lockfile
 
+      # Metro resolves `@template/ui/*` through the package's `default` export
+      # condition (`lib/module/...`), so the library must be built first.
+      - name: Build library
+        run: bun run build
+
       - name: Bootstrap harness (iOS)
         working-directory: storybook/native
         run: bunx vitest-mobile bootstrap --platform ios --headless
+
+      # The RN CLI swallows the real pod-install error unless run with
+      # --verbose (which vitest-mobile can't pass through), so on failure
+      # dump the harness logs and re-run pod install verbosely.
+      - name: Diagnose bootstrap failure (iOS)
+        if: failure()
+        run: |
+          echo "==== vitest-mobile logs ===="
+          cat ~/.cache/vitest-mobile/logs/*.log 2>/dev/null || true
+          proj=$(ls -d ~/.cache/vitest-mobile/builds/*/project 2>/dev/null | head -1)
+          if [ -n "$proj" ]; then
+            echo "==== bundle exec pod install --verbose in $proj/ios ===="
+            cd "$proj"
+            bundle install || true
+            cd ios
+            bundle exec pod install --verbose || pod install --verbose || true
+          fi
 
       - name: Pre-build JS bundle (iOS)
         working-directory: storybook/native
@@ -107,6 +129,11 @@ jobs:
             | sudo tee /etc/udev/rules.d/99-kvm4all.rules
           sudo udevadm control --reload-rules
           sudo udevadm trigger --name-match=kvm
+
+      # Same as the iOS job: Metro needs the built `lib/` output to resolve
+      # `@template/ui/*` exports.
+      - name: Build library
+        run: bun run build
 
       - name: Bootstrap harness (Android)
         working-directory: storybook/native
