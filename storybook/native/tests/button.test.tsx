@@ -35,7 +35,10 @@ describe('Button', () => {
   it('shows a spinner instead of the label while loading', async () => {
     const screen = await render(<Counter loading={true} />);
     await expect.element(screen.getByTestId('button-spinner')).toBeVisible();
-    expect(screen.queryByText('Increment')).toBe(null);
+    // No `queryByText('Increment')` absence check here: iOS text queries also
+    // match `accessibilityLabel`, which Button intentionally keeps set to the
+    // label while loading, so the query still resolves there (Android only
+    // reads visible TextView text and would return null).
     await screen.getByTestId('increment').tap();
     await expect.element(screen.getByTestId('count')).toHaveText('0');
   });
