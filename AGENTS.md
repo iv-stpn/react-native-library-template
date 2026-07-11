@@ -127,6 +127,21 @@ needs Xcode ≥ 15** (macOS only); Android needs SDK API 35 + Java 17. Because t
 loads the app through the project's own `metro.config.js`, Uniwind's `className` resolves exactly
 as it does at runtime — no test-only styling shim.
 
+**Two config pieces make this work in this monorepo — don't remove them:**
+
+- `vitest.config.mts` sets **`isolate: false` on each project**. All test files share one booted
+  app over a single WebSocket; with the default `isolate: true`, each extra test file spawns a
+  fresh worker that tears down the previous app session, so every file after the first silently
+  never runs (and the suite still exits `0`). It must be set per-project, not top-level.
+- `storybook/native/metro.config.js` has a block guarded by `if (process.env.VITEST_MOBILE_APP_ROOT)`
+  (set by vitest-mobile only during test runs, so `expo start`/Storybook are unaffected). It
+  reproduces what vitest-mobile's *generated* config would do — pin the Metro server root to the
+  app dir, stub Node built-ins that `vitest/worker` imports, watch the built harness project, and
+  pin `react`/`react-native`/`@babel/runtime` + `InitializeCore` to the harness tree. Without it
+  the harness bundle 404s, fails to resolve `node:*`, or crashes with "setImmediate doesn't exist".
+  The file is a CommonJS module — use `__dirname`, never `import.meta.dirname` (which crashes the
+  `require()` load under Node's ESM auto-detection).
+
 First run on a machine (builds the native harness, ~5 min, then cached). Pick the platform your
 toolchain supports — iOS shown; swap `ios` → `android` on Linux+KVM:
 
@@ -134,6 +149,12 @@ toolchain supports — iOS shown; swap `ios` → `android` on Linux+KVM:
 bun run --cwd storybook/native test:native:ios:bootstrap   # build + boot + install the harness app
 bun run test:native:ios                                    # == vitest run --project ios in storybook/native
 ```
+
+On a fresh/rebooted machine, `bun run --cwd storybook/native test:native:android:setup`
+(`scripts/android-setup.sh`) gets a device ready idempotently: it pre-starts the adb server,
+bootstraps only if this project never has, and boots the cached AVD headless and waits for it
+(reusing an already-booted emulator). It does **not** run tests — chain it before the suite, e.g.
+`test:native:android:run` does `…:setup && …:android` in one step.
 
 **CI:** `.github/workflows/ci.yml` runs these on separate runners — the `checks` job
 (lint/typecheck/build/story tests) on `ubuntu-latest`, plus two on-device jobs following the

@@ -13,6 +13,8 @@
     "test:native:ios:bootstrap": "vitest-mobile bootstrap --platform ios",
     "test:native:ios:bundle": "vitest-mobile bundle --platform ios",
     "test:native:android": "vitest run --project android",
+    "test:native:android:setup": "./scripts/android-setup.sh",
+    "test:native:android:run": "bun run test:native:android:setup && bun run test:native:android",
     "test:native:android:bootstrap": "vitest-mobile bootstrap --platform android",
     "test:native:android:bundle": "vitest-mobile bundle --platform android"
   },
