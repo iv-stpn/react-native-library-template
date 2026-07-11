@@ -78,6 +78,22 @@ jobs:
       - name: Build library
         run: bun run build
 
+      # Cache the built native harness (~5 min to build from scratch). The key
+      # hashes the platform build inputs, so a dependency bump rebuilds; the
+      # restore-keys prefix still lets bootstrap resume from a stale build.
+      - name: Compute harness cache key
+        id: cache-key
+        working-directory: storybook/native
+        run: echo "key=ios-e2e-$(bunx vitest-mobile cache-key --platform ios)" >> "$GITHUB_OUTPUT"
+
+      - name: Restore harness cache
+        id: cache-restore
+        uses: actions/cache/restore@v4
+        with:
+          path: ~/.cache/vitest-mobile
+          key: ${{ steps.cache-key.outputs.key }}
+          restore-keys: ios-e2e-
+
       - name: Bootstrap harness (iOS)
         working-directory: storybook/native
         run: bunx vitest-mobile bootstrap --platform ios --headless
@@ -106,6 +122,13 @@ jobs:
       - name: Run native tests (iOS)
         working-directory: storybook/native
         run: bunx vitest run --project ios
+
+      - name: Save harness cache
+        if: steps.cache-restore.outputs.cache-hit != 'true'
+        uses: actions/cache/save@v4
+        with:
+          path: ~/.cache/vitest-mobile
+          key: ${{ steps.cache-key.outputs.key }}
 
   # vitest-mobile E2E on a real Android Emulator (follows the docs' Android
   # recipe). Runs on free ubuntu runners but needs KVM + SDK 35 + Java 17.
@@ -144,6 +167,23 @@ jobs:
       - name: Build library
         run: bun run build
 
+      # Cache the built native harness plus the API-35 system image (both are
+      # the bulk of the job's time; see the iOS job for the key semantics).
+      - name: Compute harness cache key
+        id: cache-key
+        working-directory: storybook/native
+        run: echo "key=android-e2e-$(bunx vitest-mobile cache-key --platform android)" >> "$GITHUB_OUTPUT"
+
+      - name: Restore harness cache
+        id: cache-restore
+        uses: actions/cache/restore@v4
+        with:
+          path: |
+            ~/.cache/vitest-mobile
+            /usr/local/lib/android/sdk/system-images/android-35
+          key: ${{ steps.cache-key.outputs.key }}
+          restore-keys: android-e2e-
+
       - name: Bootstrap harness (Android)
         working-directory: storybook/native
         run: bunx vitest-mobile bootstrap --platform android --headless --api-level 35
@@ -155,4 +195,13 @@ jobs:
       - name: Run native tests (Android)
         working-directory: storybook/native
         run: bunx vitest run --project android
+
+      - name: Save harness cache
+        if: steps.cache-restore.outputs.cache-hit != 'true'
+        uses: actions/cache/save@v4
+        with:
+          path: |
+            ~/.cache/vitest-mobile
+            /usr/local/lib/android/sdk/system-images/android-35
+          key: ${{ steps.cache-key.outputs.key }}
 
