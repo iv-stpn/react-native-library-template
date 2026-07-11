@@ -1,6 +1,4 @@
 // biome-ignore-all lint/style/noCommonJs: exception for metro config
-// biome-ignore-all lint/style/noProcessEnv: mirrors vitest-mobile's own cache-dir resolution
-// biome-ignore-all lint/correctness/noProcessGlobal: metro configs run in Node; process is available and expected here
 
 const process = require('node:process');
 const path = require('node:path');
@@ -67,7 +65,6 @@ if (process.env.VITEST_MOBILE_APP_ROOT) {
   //    its generated entry (`.vitest-mobile/index`) by rewriting the bundle URL relative
   //    to the *app* dir, then Metro resolves it against serverRoot — so a workspace-root
   //    serverRoot makes it look for `<repo>/.vitest-mobile/index` and 404. Pin it to the app.
-  // biome-ignore lint/style/useNamingConvention: unstable_serverRoot is Metro's own config key, not ours to rename
   finalConfig.server = { ...finalConfig.server, unstable_serverRoot: projectRoot };
 
   // 2. Watch the harness project. The harness bundle depends on the RN/Metro toolchain
