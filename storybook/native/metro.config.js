@@ -85,6 +85,39 @@ if (process.env.VITEST_MOBILE_APP_ROOT) {
   finalConfig.serializer = { ...finalConfig.serializer, getModulesRunBeforeMainModule: () => [harnessRnCore] };
   finalConfig.transformer = { ...finalConfig.transformer, assetRegistryPath: 'react-native/Libraries/Image/AssetRegistry' };
 
+  // 2c. Normalise module source maps for RN 0.86+ harness compatibility.
+  //     The harness project bootstrapped by vitest-mobile for newer RN installs
+  //     `metro-runtime` via npm; that copy of `metro-runtime/src/polyfills/require.js`
+  //     may be pre-compiled with an embedded `//# sourceMappingURL` comment. When
+  //     Metro/Babel transforms it, the existing inline map causes Babel to emit a
+  //     *composed* source-map object rather than a raw mappings array.
+  //     `metro-source-map@0.84.4`'s `fromRawMappings` only handles arrays and throws
+  //     "Unexpected module with full source map found" on any non-null non-array map.
+  //     Fix: wrap Expo's customSerializer to replace full source-map objects with `[]`
+  //     in every module output before serialisation. Source-map accuracy for polyfill
+  //     files is irrelevant in test runs, so this is a safe no-op for test quality.
+  const _expoCustomSerializer = finalConfig.serializer?.customSerializer;
+  if (_expoCustomSerializer) {
+    const isFullSourceMap = (map) => typeof map === 'object' && map !== null && !Array.isArray(map);
+    const normalizeModuleMap = (mod) => {
+      if (!mod.output?.some((out) => isFullSourceMap(out.data?.map))) return mod;
+      return {
+        ...mod,
+        output: mod.output.map((out) => (isFullSourceMap(out.data?.map) ? { ...out, data: { ...out.data, map: [] } } : out)),
+      };
+    };
+    finalConfig.serializer = {
+      ...finalConfig.serializer,
+      customSerializer: (entryPoint, preModules, graph, options) =>
+        _expoCustomSerializer(
+          entryPoint,
+          preModules.map(normalizeModuleMap),
+          { ...graph, dependencies: new Map([...graph.dependencies].map(([k, v]) => [k, normalizeModuleMap(v)])) },
+          options,
+        ),
+    };
+  }
+
   // 3. Node built-in / Vitest-internal stubs. vitest-mobile's own worker imports
   //    `vitest/worker` (a subpath, so not caught by its bare-`vitest` → shim rule),
   //    which statically imports `node:vm`, `node:fs`, jsdom, etc. — none of which exist
