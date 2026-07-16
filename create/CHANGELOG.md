@@ -1,5 +1,13 @@
 # create-react-native-library-template
 
+## 0.3.1
+
+### Patch Changes
+
+- cc88372: Upgrade Expo to v57 and related dependencies. Note: Expo Go is no longer supported — the example app (native Storybook) requires a [development build](https://docs.expo.dev/develop/development-builds/introduction/) as of Expo SDK 55+.
+- 1562f27: Fix `vitest-mobile bundle` crash ("Unexpected module with full source map") on Android CI with RN 0.86+. The harness's npm-installed `metro-runtime` ships `require.js` pre-compiled with an embedded sourceMappingURL; Babel emits a composed source-map object that `metro-source-map@0.84.4` cannot handle. The native Metro config now normalises full source-map objects to empty arrays before serialisation (scoped to vitest-mobile test runs only).
+- 3122e05: Pin devDependency versions, update biome plugins to latest, bump TypeScript to v7, and clean up redundant biome-ignore comments in metro config.
+
 ## 0.3.0
 
 ### Minor Changes
